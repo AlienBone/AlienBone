@@ -1,0 +1,148 @@
+options:
+
+	# Color options:
+	firstcolor: a # Change the colors by using the MineCraft color codes, WITHOUT the &
+	secondcolor: 2 # Change the colors by using the MineCraft color codes, WITHOUT the &
+
+	# Jail options:
+	stopmovement: false # Makes the player unable to move once jailed. Note: Need the addon SkQuery for this to work. It will give a error if you didn't install SkQuery
+	stopchat: true # Makes the player unable to talk once jailed
+	luckperms: true # Gives the jailed person "jailed" rank. You can make that rank have certain permissions. Note: you will need luckperms and vault for this, and you need to create a rank called "jailed"
+
+command /setjail [<text>]:
+	permission: jail.set
+	permission message: "&cYou don't have the permission to do that!"
+	trigger:
+		set {jails::%arg-1%} to location of player
+		add arg-1 to {jailnames::*}
+		send "&{@firstcolor}Succesfully set jail &{@secondcolor}%arg-1%&{@firstcolor} to your location!"
+
+command /jail [<player>] [<text>] [<int>] [<text>] [<text>]:
+	permission: jail.others
+	trigger:
+		if {jailnames::*} doesn't contain arg-2:
+			send "&{@firstcolor}This &{@secondcolor}jailname &{@firstcolor}is &{@secondcolor}invalid!"
+		else:
+			if arg-5 is set:
+				if arg-4 isn't "minute", "hour", "day", "week" or "month":
+					send "&{@firstcolor} Incorrect usage for  &{@secondcolor}timespand!. This must either be minute, day, week or month!"
+				else:
+					send "&{@firstcolor}You have been &{@secondcolor}jailed &{@firstcolor}for &{@secondcolor}%arg-5% &{@firstcolor}for a timespand of %arg-3% %arg-4%" to arg-1
+					send "&{@firstcolor}You have jailed &{@secondcolor}%arg-1% &{@firstcolor}for &{@secondcolor}%arg-5% &{@firstcolor}for a timespand of %arg-3% %arg-4%"
+					set {location::%arg-1's uuid%} to location of arg-1
+					set {jailed::%arg-1's uuid%} to true
+					set {timespand::%arg-4%::%arg-1's uuid%} to arg-3
+					teleport arg-1 to {jails::%arg-2%}
+					if {@luckperms} is true:
+						set {beforejailrank::%arg-1's uuid%} to player's group
+						make console execute command "lp user %arg-1% parent set jailed"
+			else:
+				if arg-1 isn't set:
+					send "&{@firstcolor} You must provide a &{@secondcolor}Player! &{@firstcolor}Correct usage: /jail (player) (jail) (number) (timespand) (reason)"
+				else:
+					if arg-2 isn't set:
+						send "&{@firstcolor} You must provide a &{@secondcolor}jail! &{@firstcolor}Correct usage: /jail (player) (jail) (number) (timespand) (reason)"
+					else:
+						if arg-3 isn't set:
+							send "&{@firstcolor} You must provide a &{@secondcolor}number! &{@firstcolor}Correct usage: /jail (player) (jail) (number) (timespand) (reason)"
+						else:
+							if arg-4 isn't set:
+								send "&{@firstcolor} You must provide a &{@secondcolor}timespand! &{@firstcolor}Correct usage: /jail (player) (jail) (number) (timespand) (reason)"
+							else:
+								if arg-5 isn't set:
+									send "&{@firstcolor} You must provide a &{@secondcolor}Reason! &{@firstcolor}Correct usage: /jail (player) (jail) (number) (timespand) (reason)"
+
+command /unjail [<player>]:
+	permission: jail.unjail
+	trigger:
+		if {jailed::%arg-1's uuid%} is true:
+			delete {timespand::minute::%arg-1's uuid%}
+			delete {timespand::hour::%arg-1's uuid%}
+			delete {timespand::day::%arg-1's uuid%}
+			delete {timespand::week::%arg-1's uuid%}
+			delete {timespand::year::%arg-1's uuid%}
+			delete {jailed::%arg-1's uuid%}
+			send "&{@firstcolor}You have been &{@secondcolor}released &{@firstcolor}from &{@secondcolor}jail!" to arg-1
+			send "&{@firstcolor}You have &{@secondcolor}released %arg-1% &{@firstcolor}from &{@secondcolor}jail!"
+			teleport arg-1 to {location::%arg-1's uuid%}
+			make console execute command "lp user arg-1 parent set %{beforejailed::%arg-1's uuid%}%"
+		else:
+			send "&{@firstcolor}This &{@secondcolor}player &{@firstcolor}isn't &{@secondcolor}jailed!"
+
+every minute:
+	loop all players:
+		if {timespand::minute::%loop-player's uuid%} is greater than 0:
+			remove 1 from {timespand::minute::%loop-player's uuid%}
+		else:
+			if {timespand::minute::%loop-player's uuid%} is 0:
+				delete {timespand::minute::%loop-player's uuid%}
+				send "&{@firstcolor}You have been &{@secondcolor}released &{@firstcolor}from &{@secondcolor}jail!" to loop-player
+				set {jailed::%loop-player's uuid%} to false
+				teleport loop-player to {location::%loop-player's uuid%}
+				if {@luckperms} is true:
+					make console execute command "lp user %loop-player% parent set %{beforejailrank::%loop-player's uuid%}%"
+
+every hour:
+	loop all players:
+		if {timespand::hour::%loop-player's uuid%} is greater than 0:
+			remove 1 from {timespand::hour::%loop-player's uuid%}
+		else:
+			if {timespand::hour::%loop-player's uuid%} is 0:
+				delete {timespand::hour::%loop-player's uuid%}
+				send "&{@firstcolor}You have been &{@secondcolor}released &{@firstcolor}from &{@secondcolor}jail!" to loop-player
+				set {jailed::%loop-player's uuid%} to false
+				teleport loop-player to {location::%loop-player's uuid%}
+				if {@luckperms} is true:
+					make console execute command "lp user %loop-player% parent set %{beforejailrank::%loop-player's uuid%}%"
+
+every day:
+	loop all players:
+		if {timespand::day::%loop-player's uuid%} is greater than 0:
+			remove 1 from {timespand::day::%loop-player's uuid%}
+		else:
+			if {timespand::day::%loop-player's uuid%} is 0:
+				delete {timespand::day::%loop-player's uuid%}
+				send "&{@firstcolor}You have been &{@secondcolor}released &{@firstcolor}from &{@secondcolor}jail!" to loop-player
+				set {jailed::%loop-player's uuid%} to false
+				teleport loop-player to {location::%loop-player's uuid%}
+				if {@luckperms} is true:
+					make console execute command "lp user %loop-player% parent set %{beforejailrank::%loop-player's uuid%}%"
+
+every 7 days:
+	loop all players:
+		if {timespand::week::%loop-player's uuid%} is greater than 0:
+			remove 1 from {timespand::week::%loop-player's uuid%}
+		else:
+			if {timespand::week::%loop-player's uuid%} is 0:
+				delete {timespand::week::%loop-player's uuid%}
+				send "&{@firstcolor}You have been &{@secondcolor}released &{@firstcolor}from &{@secondcolor}jail!" to loop-player
+				set {jailed::%loop-player's uuid%} to false
+				teleport loop-player to {location::%loop-player's uuid%}
+				if {@luckperms} is true:
+					make console execute command "lp user %loop-player% parent set %{beforejailrank::%loop-player's uuid%}%"
+
+every 30 days:
+	loop all players:
+		if {timespand::month::%loop-player's uuid%} is greater than 0:
+			remove 1 from {timespand::month::%loop-player's uuid%}
+		else:
+			if {timespand::month::%loop-player's uuid%} is 0:
+				delete {timespand::month::%loop-player's uuid%}
+				send "&{@firstcolor}You have been &{@secondcolor}released &{@firstcolor}from &{@secondcolor}jail!" to loop-player
+				set {jailed::%loop-player's uuid%} to false
+				teleport loop-player to {location::%loop-player's uuid%}
+				if {@luckperms} is true:
+					make console execute command "lp user %loop-player% parent set %{beforejailrank::%loop-player's uuid%}%"
+
+on chat:
+	if {@stopchat} is true:
+		if {jailed::%player's uuid%} is true:
+			cancel event
+			send "&{@firstcolor}You can't &{@secondcolor}talk &{@firstcolor}in &{@secondcolor}jail!"
+
+on any movement:
+	if {@stopmovement} is true:
+		if {jailed::%player's uuid%} is true:
+			cancel event
+
+# Made by AlienBone, all rights reserved
